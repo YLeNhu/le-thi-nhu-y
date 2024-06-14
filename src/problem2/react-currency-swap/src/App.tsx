@@ -1,16 +1,12 @@
-function App() {
-  return (
-    <div className='App'>
-      <header className='App-header'>
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a className='App-link' href='https://reactjs.org' target='_blank' rel='noopener noreferrer'>
-          Learn React
-        </a>
-      </header>
-    </div>
-  )
-}
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import CurrencySwap from 'pages/CurrencySwap'
+
+const App = () => (
+  <Router>
+    <Routes>
+      <Route path='/' element={<CurrencySwap />}></Route>
+    </Routes>
+  </Router>
+)
 
 export default App
