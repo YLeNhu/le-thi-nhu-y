@@ -3,7 +3,7 @@ import currencyReducer from 'pages/CurrencySwap/currency.slice'
 import { useDispatch } from 'react-redux'
 
 export const store = configureStore({
-  reducer: { blog: currencyReducer }
+  reducer: { currency: currencyReducer }
 })
 
 export type RootState = ReturnType<typeof store.getState>

@@ -4,7 +4,7 @@ import http from 'utils/http'
 const initialState: any = {
   currencyList: [],
   loading: false,
-  currentRequestCurrencyId: undefined
+  currentRequestCurrencyId: 1
 }
 
 const currencySlice = createSlice({
