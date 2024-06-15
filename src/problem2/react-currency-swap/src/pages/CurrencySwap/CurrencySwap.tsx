@@ -1,6 +1,24 @@
+import { useEffect } from 'react'
 import CurrencySwapForm from './components/CurrencySwapForm'
+import { RootState, useAppDispatch } from 'store'
+import { getCurrencyList } from './currency.slice'
+import { useSelector } from 'react-redux'
 
 export default function CurrencySwap() {
+  const dispatch = useAppDispatch() // Redux hook to get dispatch function
+
+  useEffect(() => {
+    const fetchCurrencyList = async () => {
+      try {
+        await dispatch(getCurrencyList())
+      } catch (error) {
+        console.error('Error fetching currency list:', error)
+      }
+    }
+
+    fetchCurrencyList()
+  }, [dispatch])
+
   return (
     <div className='welcome w-screen h-screen bg-white relative'>
       {/* Currency swap form section */}

@@ -4,7 +4,7 @@ class Http {
   instance: AxiosInstance
   constructor() {
     this.instance = axios.create({
-      baseURL: 'http://localhost:4000/',
+      baseURL: 'https://interview.switcheo.com',
       timeout: 10000
     })
   }
