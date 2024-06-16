@@ -1,63 +1,75 @@
-import { Input, Select, Skeleton } from 'antd'
+import { InputNumber, InputNumberProps, Select, Skeleton } from 'antd'
+import { valueType } from 'antd/es/statistic/utils'
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from 'store'
 import { Currency } from 'types/currency.type'
+import sanitizeCurrencyData from 'utils/sanitizeData'
 
 const CurrencySwapForm = () => {
   const currencyList: Currency[] = useSelector((state: RootState) => state.currency.currencyList)
   const loading: boolean = useSelector((state: RootState) => state.currency.loading)
 
-  const seenCurrencies = new Set()
-  interface CurrencyOption {
-    value: string
-    label: string
-  }
+  const currencyOptions = sanitizeCurrencyData(currencyList);
 
-  const currencyOptions: CurrencyOption[] = []
+  const [inputAmount, setInputAmount] = useState<number>(1);
+  const [outputAmount, setOutputAmount] = useState<number>(1);
 
-  currencyList.forEach((item) => {
-    if (!seenCurrencies.has(item.currency)) {
-      seenCurrencies.add(item.currency)
-      currencyOptions.push({
-        value: item.currency,
-        label: item.currency
-      })
-    }
-  })
-
-  const initialFormData = {
-    currencyList: currencyList,
-    inputAmount: 1.0,
-    outputAmount: 1.0,
-    loading: false,
-    currentRequestCurrencyId: 1
-  }
-
-  const [formData, setFormData] = useState(initialFormData)
+  const [inputCurrency, setInputCurrency] = useState('ETH');
+  const [outputCurrency, setOutputCurrency] = useState('USDC');
 
   const labelClasses = 'block text-gray-700 text-sm font-bold mb-2'
 
+  interface CurrencyFormData {
+    inputAmount: number,
+    outputAmount: number,
+    inputCurrency: string,
+    outputCurrency: string,
+  }
+
+  const calculateBasedOnRate = (data: CurrencyFormData) => {
+    const inputPrice = currencyList.filter((item) => item.currency == data.inputCurrency)[0].price;
+    const outputPrice = currencyList.filter((item) => item.currency == data.outputCurrency)[0].price;
+    const rate = inputPrice / outputPrice;
+
+    const convertedOutputAmount = parseFloat((rate * inputAmount).toFixed(5));
+    setOutputAmount(convertedOutputAmount);
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log(formData)
+    const formData: CurrencyFormData = {
+      inputAmount: inputAmount,
+      outputAmount: outputAmount,
+      inputCurrency: inputCurrency,
+      outputCurrency: outputCurrency,
+    }
+    console.log(formData);
+    calculateBasedOnRate(formData);
   }
 
-  const handleInputAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = parseFloat(event.target.value)
+  const onInputChange: InputNumberProps['onChange'] = (value) => {
+    const inputValue = value ? parseFloat(value.toString()) : 0; // Parse input value to float
 
-    setFormData((prev) => ({
-      ...prev,
+    value != 0 && setInputAmount(inputValue); // Update inputAmount state
+
+    const formData = {
       inputAmount: inputValue,
-      outputAmount: inputValue * 5
-    }))
-  }
+      outputAmount: outputAmount,
+      inputCurrency: inputCurrency,
+      outputCurrency: outputCurrency,
+    };
+
+    console.log(formData); // Log formData for debugging
+
+    calculateBasedOnRate(formData); // Calculate based on formData
+  };
 
   return (
     <>
       {loading ? (
-        <div className='bg-white z-10 w-full max-w-5xl rounded-lg shadow-lg shadow-black/20 px-10 py-10 text-left absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center'>
-          <p className='block text-gray-700 text-md font-bold mb-4'> Loading assets data, please wait...</p>
+        <div className='bg-white z-10 w-full max-w-5xl rounded-lg shadow-lg shadow-black/20 px-10 py-10 text-left absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+          <p className='block text-gray-700 text-md font-bold mb-4 text-center'> Loading assets data, please wait...</p>
           <Skeleton />
         </div>
       ) : (
@@ -72,13 +84,16 @@ const CurrencySwapForm = () => {
                 Amount to send
               </label>
 
-              <Input
+              <InputNumber
                 id='input-amount'
                 size='large'
-                type='number'
                 placeholder='Enter amount'
-                value={formData.inputAmount}
-                onChange={handleInputAmount}
+                type='number'
+                min={0}
+                style={{ width: '100%' }}
+                value={inputAmount}
+                // onChange={(value) => handleChangeCurrency(value as number, 'inputAmount')}
+                onChange={onInputChange}
               />
             </div>
 
@@ -86,15 +101,20 @@ const CurrencySwapForm = () => {
               <label className={labelClasses} htmlFor='send-currency'>
                 Currency
               </label>
+
               <Select
-                defaultValue={currencyOptions[0].value}
-                style={{ width: '100%', height: '100%' }}
-                onChange={(value: string) => {
-                  console.log(`selected ${value}`)
-                }}
-                size='large'
+                id='send-currency'
                 options={currencyOptions}
+                style={{ width: '100%' }}
+                size='large'
+                value={inputCurrency}
+                showSearch
+                onSearch={(value) => setInputCurrency(value)}
+                onChange={(value) => setInputCurrency(value)}
+                allowClear
+                autoClearSearchValue
               />
+
             </div>
           </div>
 
@@ -105,13 +125,15 @@ const CurrencySwapForm = () => {
                 Amount to receive
               </label>
 
-              <Input
+              <InputNumber
                 id='output-amount'
                 size='large'
+                placeholder='Enter amount'
                 type='number'
-                disabled
-                placeholder='Amount to receive'
-                value={formData.outputAmount}
+                min={0}
+                style={{ width: '100%' }}
+                value={outputAmount}
+                onChange={(value) => setOutputAmount(value as number)}
               />
             </div>
 
@@ -119,14 +141,18 @@ const CurrencySwapForm = () => {
               <label className={labelClasses} htmlFor='receive-currency'>
                 Currency
               </label>
+
               <Select
-                defaultValue={currencyOptions[1].value}
-                style={{ width: '100%', height: '100%' }}
-                onChange={(value: string) => {
-                  console.log(`selected ${value}`)
-                }}
+                id='receive-currency'
+                style={{ width: '100%' }}
                 size='large'
+                value={outputCurrency}
+                showSearch
+                onSearch={(value) => setOutputCurrency(value)}
                 options={currencyOptions}
+                onChange={(value) => setOutputCurrency(value)}
+                allowClear
+                autoClearSearchValue
               />
             </div>
           </div>
