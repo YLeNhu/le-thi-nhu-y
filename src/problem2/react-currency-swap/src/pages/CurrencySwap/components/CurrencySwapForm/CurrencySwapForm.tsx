@@ -17,6 +17,7 @@ const CurrencySwapForm = () => {
   const [outputAmount, setOutputAmount] = useState<number | null>(1)
   const [inputCurrency, setInputCurrency] = useState('ETH')
   const [outputCurrency, setOutputCurrency] = useState('USDC')
+  const [conversionRate, setConversionRate] = useState<string>('')
 
   const calculateBasedOnRate = useCallback((data: CurrencyFormData, reverse: boolean = false) => {
     const inputCurrencyData = currencyList.find((item) => item.currency === data.inputCurrency)
@@ -31,6 +32,7 @@ const CurrencySwapForm = () => {
         const convertedOutputAmount = data.inputAmount ? parseFloat((rate * data.inputAmount).toPrecision(7)) : 0
         setOutputAmount(convertedOutputAmount)
       }
+      setConversionRate(`1 ${data.outputCurrency} ≈ ${rate.toPrecision(5)} ${data.inputCurrency}`)
     }
   }, [currencyList])
 
@@ -83,10 +85,11 @@ const CurrencySwapForm = () => {
           />
           <div className='flex flex-col space-y-4'>
             <div className='flex items-center justify-between'>
-              <div className='inline-flex items-center text-base font-semibold text-gray-900'>$2367</div>
+              <div className='inline-flex items-center text-base font-semibold text-gray-900'>{conversionRate}</div>
               <Button
                 type='primary'
                 htmlType='submit'
+                size='large'
                 className='bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded'
               >
                 CONFIRM SWAP
