@@ -1,10 +1,12 @@
-import { InputNumber, InputNumberProps, Select, Skeleton } from 'antd'
-import { valueType } from 'antd/es/statistic/utils'
+import { InputNumber, InputNumberProps, Select } from 'antd'
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from 'store'
 import { Currency } from 'types/currency.type'
 import sanitizeCurrencyData from 'utils/sanitizeData'
+import CurrencyFormSkeleton from '../Skeleton'
+import { CurrencyFormData } from 'types/currency-form.type'
+import { labelClasses } from 'constants/common-classes'
 
 const CurrencySwapForm = () => {
   const currencyList: Currency[] = useSelector((state: RootState) => state.currency.currencyList)
@@ -12,27 +14,19 @@ const CurrencySwapForm = () => {
 
   const currencyOptions = sanitizeCurrencyData(currencyList);
 
-  const [inputAmount, setInputAmount] = useState<number>(1);
-  const [outputAmount, setOutputAmount] = useState<number>(1);
+  const [inputAmount, setInputAmount] = useState<number | null>(1);
+  const [outputAmount, setOutputAmount] = useState<number | null>(1);
 
   const [inputCurrency, setInputCurrency] = useState('ETH');
   const [outputCurrency, setOutputCurrency] = useState('USDC');
 
-  const labelClasses = 'block text-gray-700 text-sm font-bold mb-2'
-
-  interface CurrencyFormData {
-    inputAmount: number,
-    outputAmount: number,
-    inputCurrency: string,
-    outputCurrency: string,
-  }
-
   const calculateBasedOnRate = (data: CurrencyFormData) => {
+
     const inputPrice = currencyList.filter((item) => item.currency == data.inputCurrency)[0].price;
     const outputPrice = currencyList.filter((item) => item.currency == data.outputCurrency)[0].price;
-    const rate = inputPrice / outputPrice;
+    const rate = outputPrice !== 0 ? inputPrice / outputPrice : 0;
 
-    const convertedOutputAmount = parseFloat((rate * inputAmount).toFixed(5));
+    const convertedOutputAmount = data.inputAmount ? parseFloat((rate * data.inputAmount).toFixed(5)) : 0;
     setOutputAmount(convertedOutputAmount);
   }
 
@@ -48,10 +42,9 @@ const CurrencySwapForm = () => {
     calculateBasedOnRate(formData);
   }
 
-  const onInputChange: InputNumberProps['onChange'] = (value) => {
-    const inputValue = value ? parseFloat(value.toString()) : 0; // Parse input value to float
-
-    value != 0 && setInputAmount(inputValue); // Update inputAmount state
+  const onInput: InputNumberProps['onInput'] = (value) => {
+    const inputValue = parseFloat(value);
+    setInputAmount(inputValue);
 
     const formData = {
       inputAmount: inputValue,
@@ -60,18 +53,13 @@ const CurrencySwapForm = () => {
       outputCurrency: outputCurrency,
     };
 
-    console.log(formData); // Log formData for debugging
-
-    calculateBasedOnRate(formData); // Calculate based on formData
+    calculateBasedOnRate(formData);
   };
 
   return (
     <>
       {loading ? (
-        <div className='bg-white z-10 w-full max-w-5xl rounded-lg shadow-lg shadow-black/20 px-10 py-10 text-left absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
-          <p className='block text-gray-700 text-md font-bold mb-4 text-center'> Loading assets data, please wait...</p>
-          <Skeleton />
-        </div>
+        <CurrencyFormSkeleton />
       ) : (
         <form
           onSubmit={handleSubmit}
@@ -93,7 +81,7 @@ const CurrencySwapForm = () => {
                 style={{ width: '100%' }}
                 value={inputAmount}
                 // onChange={(value) => handleChangeCurrency(value as number, 'inputAmount')}
-                onChange={onInputChange}
+                onInput={onInput}
               />
             </div>
 
@@ -109,7 +97,6 @@ const CurrencySwapForm = () => {
                 size='large'
                 value={inputCurrency}
                 showSearch
-                onSearch={(value) => setInputCurrency(value)}
                 onChange={(value) => setInputCurrency(value)}
                 allowClear
                 autoClearSearchValue
@@ -148,7 +135,6 @@ const CurrencySwapForm = () => {
                 size='large'
                 value={outputCurrency}
                 showSearch
-                onSearch={(value) => setOutputCurrency(value)}
                 options={currencyOptions}
                 onChange={(value) => setOutputCurrency(value)}
                 allowClear
