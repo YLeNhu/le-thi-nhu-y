@@ -4,7 +4,7 @@ import { useAppDispatch } from 'store'
 import { getCurrencyList } from './currency.slice'
 
 export default function CurrencySwap() {
-  const dispatch = useAppDispatch() // Redux hook to get dispatch function
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     const fetchCurrencyList = async () => {

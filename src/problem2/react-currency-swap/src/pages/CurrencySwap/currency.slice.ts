@@ -31,7 +31,7 @@ const currencySlice = createSlice({
         state.loading = false
       })
       .addCase(getCurrencyList.rejected, (state, action) => {
-        state.loading = false
+        state.loading = true
       })
   }
 })
